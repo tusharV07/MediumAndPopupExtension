@@ -2,7 +2,7 @@
     const selectors = [
         '.popup:not([role="dialog"])', '.overlay:not([role="navigation"])',
         '.modal:not([data-keep])', '.backdrop', '.lightbox',
-        '[class*="subscribe"]', '[class*="paywall"]',
+        '[class*="subscribe"]', '[class*="paywall"]','[class*="modal"]',
         '[id*="overlay"]', '[id*="modal"]', '[id*="paywall"]',
         'div[style*="position:fixed"][style*="z-index"]:not([data-keep])'
     ];
@@ -26,7 +26,7 @@
     function cleanupPage() {
         console.log('Cleaning up page...');
         selectors.forEach(sel => {
-            document.querySelectorAll(sel).forEach(el => el.remove());
+            document.querySelectorAll(sel).forEach(el => {if(!el.closest('#devtools')) el.remove()});
         });
 
         document.querySelectorAll('[class]').forEach(el => {
@@ -49,12 +49,29 @@
 
     }
 
+    let runCount = 0;
+
+    // MutationObserver callback
+    const observerCallback = () => {
+        if (runCount < 1) {
+            cleanupPage();
+            runCount++;
+            console.log(`Observer run count: ${runCount}`);
+        } else {
+            console.log('Observer has run 2 times. Disconnecting...');
+            observer.disconnect();
+        }
+    };
+
+    // Initialize the MutationObserver
+    const observer = new MutationObserver(observerCallback);
+
 
     //commented out so that this only works with the toggle
     // window.addEventListener('load', () => {
     //     setTimeout(() => {
     //         cleanupPage();
-    //         observer.observe(document.documentElement, {
+    //         observer.observe(document.body, {
     //             childList: true,
     //             subtree: true,
     //             attributes: true,
@@ -69,7 +86,7 @@
         if (message.action === 'toggleExtension') {
             if (message.enabled) {
                 cleanupPage();
-                observer.observe(document.documentElement, {
+                observer.observe(document.body, {
                     childList: true,
                     subtree: true,
                     attributes: true,
@@ -81,6 +98,4 @@
         }
     });
 
-    // Observe for new elements or style changes
-    const observer = new MutationObserver(() => cleanupPage());
 })();
