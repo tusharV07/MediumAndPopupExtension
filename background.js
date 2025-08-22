@@ -1,7 +1,7 @@
-let isEnabled = true; // Default state
+let isEnabled = true;
 
 chrome.action.onClicked.addListener((tab) => {
-    isEnabled = !isEnabled; // Toggle state
+    isEnabled = !isEnabled; // Toggle state for icon change
     chrome.action.setIcon({
         path: isEnabled ? {
             "16": "icons/enabled16.png",
@@ -13,20 +13,21 @@ chrome.action.onClicked.addListener((tab) => {
             "128": "icons/disabled128.png"
         }
     });
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.id) {
+    if (tab.url && tab.url.includes('medium.com') && !tab.url.includes('freedium.cfd')) {
+        const newUrl = 'https://freedium.cfd/' + tab.url;
+        chrome.tabs.update(tab.id, { url: newUrl });
+    } else {
+        if (tab.id) {
             chrome.tabs.sendMessage(
-                tabs[0].id,
-                { action: 'toggleExtension', enabled: true },
+                tab.id,
+                { action: 'triggerExtension', enabled: true },
                 (response) => {
                     if (chrome.runtime.lastError) {
                         console.warn('No content script listening in this tab:', chrome.runtime.lastError.message);
-                    } else {
-                        console.log('Response:', response);
                     }
                 }
             );
         }
-    });
+    }
 
 });
